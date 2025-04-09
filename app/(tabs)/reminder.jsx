@@ -70,16 +70,29 @@ const Reminder = ({ showAddReminder = true }) => {
     });
   };
 
-  const addReminder = async () => {
-    const { title, selectedDate, selectedTime, reminders } = state;
-    if (!title || selectedDate === "Select Date" || selectedTime === "Select Time") {
-      return Alert.alert("Incomplete Fields", "Please enter all details!");
-    }
-    const newReminder = { title, description: state.description, date: selectedDate, time: selectedTime };
-    const updatedReminders = [...reminders, newReminder];
-
-    updateState({ reminders: updatedReminders, title: "", description: "", selectedDate: "Select Date", selectedTime: "Select Time" });
-    await AsyncStorage.setItem("reminders", JSON.stringify(updatedReminders));
+  const addReminder = async (reminderText, selectedDate, selectedTime) => {
+    if (!reminderText.trim() || selectedDate === "Select Date" || selectedTime === "Select Time") return;
+  
+    const newReminder = {
+      id: Date.now(),
+      text: reminderText.trim(),
+      date: selectedDate,
+      time: selectedTime,
+    };
+  
+    const updatedList = [...reminderList, newReminder];
+    setReminderList(updatedList);
+    await AsyncStorage.setItem("reminders", JSON.stringify(updatedList));
+  
+    // Schedule the notification
+    const triggerTime = new Date(`${selectedDate} ${selectedTime}`);
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: "Reminder Alert!",
+        body: `Don't forget: ${reminderText}`,
+      },
+      trigger: { date: triggerTime },
+    });
   };
 
   const deleteReminder = async (index) => {
